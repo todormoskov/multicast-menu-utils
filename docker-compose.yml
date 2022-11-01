@@ -1,0 +1,73 @@
+version: "3.9"
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - cadvisor
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      # Cadvisor not showing Docker containers with Docker for Mac #1565, https://github.com/google/cadvisor/issues/1565
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - db
+      - redis
+      - multicast_menu
+      - celery
+  celery:
+    build: .
+    volumes:
+      - .:/multicast
+    command: celery -A multicast worker --loglevel=info
+    container_name: celery
+    depends_on:
+      - multicast_menu
+      - redis
+  multicast_menu:
+    build: .
+    volumes:
+      - .:/multicast
+    ports:
+      - "8000:8000"
+    container_name: multicast_menu
+    command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - db
+      - redis
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"

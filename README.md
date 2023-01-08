@@ -53,6 +53,8 @@ docker-compose up -d
 
 This will start all services specified in the docker-compose.yml file. MulticastMenu should then be available on http://localhost:8080.
 
+To monitor the used resources by the containers open Grafana. Grafana should be running on http://localhost:3000/. Next, open Dashboards/Import. Here we want to import the following dashboard: https://grafana.com/grafana/dashboards/193-docker-monitoring/. For this we need to write the URL of the dashboard (or just the ID: 193) in the Import form and click on Load. After that, we only need to select Prometheus in the prometheus field and click on Import. This will import the dashboard, and from now on we can use it to monitor the used resources by the containers.
+
 # 2. Performance Testing
 The performance testing is done through a tool called locust. The folder performance_testing contains the locust file, which contains all actions that can be performed by a MulticastMenu user, two utility functions and example data to use during the tests.
 
